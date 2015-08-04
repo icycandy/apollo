@@ -1,0 +1,16 @@
+hyper = {}
+hyper['test_iter'] = 20
+hyper['test_interval'] = 100
+hyper['base_lr'] = 0.0001
+hyper['lr_policy'] = "step"
+hyper['gamma'] = 0.1
+hyper['stepsize'] = 1000
+hyper['display_interval'] = 10
+hyper['max_iter'] = 50000
+hyper['momentum'] = 0.8
+hyper['weight_decay'] = 0.00005
+hyper['snapshot_interval'] = 100
+hyper['random_seed'] = 0
+hyper['graph_interval'] = 100
+hyper['graph_prefix'] = ''
+hyper['batch_size'] = 10

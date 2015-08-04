@@ -5,7 +5,7 @@ from libcpp cimport bool
 from libcpp.set cimport set
 from libcpp.map cimport map
 from cython.operator cimport postincrement, dereference
-from definitions cimport Tensor as CTensor, Blob as CBlob, Layer as CLayer, shared_ptr, LayerParameter, ApolloNet
+from definitions cimport Tensor as CTensor, Blob as CBlob, Layer as CLayer, shared_ptr, LayerParameter, ApolloNet, TRAIN, TEST
 
 import numpy as pynp
 import utils.draw
@@ -118,6 +118,11 @@ cdef class Blob(object):
         self.thisptr = other
     def count(self):
         return self.thisptr.get().count()
+    def reshape(self, pytuple):
+        cdef vector[int] shape
+        for x in pytuple:
+            shape.push_back(x)
+        self.thisptr.get().Reshape(shape)
     property shape:
         def __get__(self):
             return self.thisptr.get().shape()
@@ -188,20 +193,60 @@ cdef class Layer(object):
         
 cdef class Net:
     cdef ApolloNet* thisptr
-    def __cinit__(self, phase='train'):
+    python_layers = {}
+    def __cinit__(self):
         self.thisptr = new ApolloNet()
-        if phase == 'train':
-            self.thisptr.set_phase_train()
-        elif phase == 'test':
-            self.thisptr.set_phase_test()
-        else:
-            raise ValueError("phase must be one of ['train', 'test']")
     def __dealloc__(self):
         del self.thisptr
+    property phase:
+        def __get__(self):
+            if self.thisptr.phase() == TRAIN:
+                return 'train'
+            elif self.thisptr.phase() == TEST:
+                return 'test'
+            else:
+                raise ValueError("phase must be one of ['train', 'test']")
+        def __set__(self, value):
+            if value == 'train':
+                self.thisptr.set_phase_train()
+            elif value == 'test':
+                self.thisptr.set_phase_test()
+            else:
+                raise ValueError("phase must be one of ['train', 'test']")
     def forward_layer(self, layer):
-        return self.thisptr.ForwardLayer(layer.p.SerializeToString(), layer.r.SerializeToString())
+        if layer.p.type == 'Py':
+            new_layer = (layer.p.name not in self.layers)
+            self.thisptr.ForwardLayer(layer.p.SerializeToString(), layer.r.SerializeToString())
+            tops = self.tops
+            bottom_vec = [tops[name] for name in layer.p.bottom]
+            top_vec = [tops[name] for name in layer.p.top]
+            if new_layer:
+                layer.blobs = self.layers[layer.p.name].blobs
+                self.python_layers[layer.p.name] = layer
+            cached_layer = self.python_layers[layer.p.name]
+            cached_layer.kwargs = layer.kwargs
+            if new_layer:
+                cached_layer.setup(bottom_vec, top_vec)
+            else:
+                cached_layer.p.ClearField('bottom')
+                for bottom_name in layer.p.bottom:
+                    cached_layer.p.bottom.append(bottom_name)
+                cached_layer.r.CopyFrom(layer.r)
+            loss = cached_layer.forward(bottom_vec, top_vec)
+        else:
+            loss = self.thisptr.ForwardLayer(layer.p.SerializeToString(), layer.r.SerializeToString())
+        return loss
     def backward_layer(self, layer_name):
-        self.thisptr.BackwardLayer(layer_name)
+        if layer_name in self.python_layers:
+            cached_layer = self.python_layers[layer_name]
+            self.thisptr.BackwardLayer(layer_name)
+            tops = self.tops
+            bottom_vec = [tops[name] for name in cached_layer.p.bottom]
+            top_vec = [tops[name] for name in cached_layer.p.top]
+            cached_layer.backward(top_vec, bottom_vec)
+            self.thisptr.BackwardLayer(layer_name)
+        else:
+            self.thisptr.BackwardLayer(layer_name)
     def backward(self):
         for layer_name in self.active_layer_names()[::-1]:
             self.backward_layer(layer_name)

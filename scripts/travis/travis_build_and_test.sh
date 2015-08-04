@@ -11,7 +11,7 @@ if $WITH_CMAKE; then
   $MAKE
   if ! $WITH_CUDA; then
     $MAKE runtest
-    $MAKE lint
+    #$MAKE lint
   fi
   $MAKE clean
   cd -
@@ -19,7 +19,8 @@ else
   if ! $WITH_CUDA; then
     export CPU_ONLY=1
   fi
-  $MAKE all test pycaffe warn lint || true
+  #$MAKE all test pycaffe warn lint || true
+  $MAKE all test pycaffe warn || true
   if ! $WITH_CUDA; then
     $MAKE runtest
   fi
@@ -28,7 +29,7 @@ else
   $MAKE pycaffe
   $MAKE pytest
   $MAKE warn
-  if ! $WITH_CUDA; then
-    $MAKE lint
-  fi
+  #if ! $WITH_CUDA; then
+    #$MAKE lint
+  #fi
 fi

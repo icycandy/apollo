@@ -425,12 +425,14 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   // TODO: Fix caffe_gpu_hamming_distance (see failing unit test
   // TestHammingDistanceGPU in test_math_functions.cpp).
   NOT_IMPLEMENTED;
-  thrust::device_vector<uint8_t> popcounts(n);
-  // NOLINT_NEXT_LINE(whitespace/operators)
-  popc_kernel<<<CAFFE_GET_BLOCKS(n), CAFFE_CUDA_NUM_THREADS>>>(
-      n, x, y, thrust::raw_pointer_cast(popcounts.data()));
-  return thrust::reduce(popcounts.begin(), popcounts.end(),
-                        (uint32_t) 0, thrust::plus<uint32_t>());
+  // Commented out to suppress
+  // warning: dynamic initialization in unreachable code warning
+  /*thrust::device_vector<uint8_t> popcounts(n);*/
+  /*// NOLINT_NEXT_LINE(whitespace/operators)*/
+  /*popc_kernel<<<CAFFE_GET_BLOCKS(n), CAFFE_CUDA_NUM_THREADS>>>(*/
+      /*n, x, y, thrust::raw_pointer_cast(popcounts.data()));*/
+  /*return thrust::reduce(popcounts.begin(), popcounts.end(),*/
+                        /*(uint32_t) 0, thrust::plus<uint32_t>());*/
 }
 
 template <>
@@ -439,13 +441,15 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   // TODO: Fix caffe_gpu_hamming_distance (see failing unit test
   // TestHammingDistanceGPU in test_math_functions.cpp).
   NOT_IMPLEMENTED;
-  thrust::device_vector<uint8_t> popcounts(n);
-  // NOLINT_NEXT_LINE(whitespace/operators)
-  popcll_kernel<<<CAFFE_GET_BLOCKS(n), CAFFE_CUDA_NUM_THREADS>>>(
-      n, x, y, thrust::raw_pointer_cast(popcounts.data()));
-  return thrust::reduce(popcounts.begin(), popcounts.end(),
-                        /* NOLINT_NEXT_LINE(build/include_what_you_use) */
-                        (uint32_t) 0, thrust::plus<uint32_t>());
+  // Commented out to suppress
+  // warning: dynamic initialization in unreachable code warning
+  /*thrust::device_vector<uint8_t> popcounts(n);*/
+  /*// NOLINT_NEXT_LINE(whitespace/operators)*/
+  /*popcll_kernel<<<CAFFE_GET_BLOCKS(n), CAFFE_CUDA_NUM_THREADS>>>(*/
+      /*n, x, y, thrust::raw_pointer_cast(popcounts.data()));*/
+  /*return thrust::reduce(popcounts.begin(), popcounts.end(),*/
+                        /*[> NOLINT_NEXT_LINE(build/include_what_you_use) <]*/
+                        /*(uint32_t) 0, thrust::plus<uint32_t>());*/
 }
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
